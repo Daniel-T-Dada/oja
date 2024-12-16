@@ -23,6 +23,7 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config('DEBUG', cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
+# CSRF_TRUSTED_ORIGINS = ['https://djangotest.com', 'https://django-ecommerce-production-81b6.up.railway.app']
 
 
 # Application definition
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     'store',
     'cart',
     'payment',
+    'whitenoise.runserver_nostatic',
+    'paypal.standard.ipn',
 ]
 
 MIDDLEWARE = [
@@ -127,6 +130,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = ['static/']
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -134,3 +140,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Add paypal settings
+# Set sandbox to true
+PAYPAL_TEST = True
+
+PAYPAL_RECEIVER_EMAIL = 'business@oja.com' # Business Sandbox account
