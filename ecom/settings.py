@@ -22,8 +22,8 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
-# CSRF_TRUSTED_ORIGINS = ['https://djangotest.com', 'https://django-ecommerce-production-81b6.up.railway.app']
+ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",") + ['localhost', '127.0.0.1', '62d7-197-210-28-208.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://62d7-197-210-28-208.ngrok-free.app']
 
 
 # Application definition
