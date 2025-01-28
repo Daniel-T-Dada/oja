@@ -83,13 +83,7 @@ DATABASES = {
         default=config('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
-        ssl_require=True,
-        options='-c statement_timeout=5000',
-        connect_timeout=5,
-        keepalives=1,
-        keepalives_idle=30,
-        keepalives_interval=10,
-        keepalives_count=5
+        ssl_require=True
     )
 }
 
@@ -118,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Lagos'
 
 USE_I18N = True
 
