@@ -1,9 +1,9 @@
-
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
 from decouple import config
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,18 +79,19 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'railway',
-        # 'USER': 'postgres',
-        # 'PASSWORD':'eLOIRgFJFtVyWCqOSDqPmJizFIWGHEhW',
-        # 'HOST': 'dpg-ctdkpjqlqhvc73d6rj30-a',
-        # 'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True,
+        options='-c statement_timeout=5000',
+        connect_timeout=5,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=5
+    )
 }
-DATABASES['default']=dj_database_url.parse(config('DATABASE_URL'))
 
 
 # Password validation
