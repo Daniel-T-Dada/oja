@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-1 text-muted mb-4">500</h1>
+            <h2 class="h4 mb-4">Internal Server Error</h2>
+            <p class="text-muted mb-4">Sorry, something went wrong on our end. We're working to fix it.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    <i class="bi bi-house me-2"></i>Return Home
+                </a>
+                <button onclick="window.location.reload()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .display-1 {
+        font-size: 6rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+</style>
+{% endblock %}
