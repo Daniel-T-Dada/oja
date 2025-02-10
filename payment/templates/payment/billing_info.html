@@ -1,106 +1,412 @@
 {% extends 'base.html' %}
-
+{% load static %}
 
 {% block content %}
-
-<!-- Header-->
-<header class="bg-dark py-5">
-    <div class="container px-4 px-lg-5 my-5">
-        <div class="text-center text-white">
-            <h1 class="display-4 fw-bolder">Billing Info</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Enter Your Payment Info...</p>
+<div class="container py-5 mt-5">
+    <!-- Checkout Progress -->
+    <div class="checkout-progress mb-5">
+        <div class="progress-steps">
+            <div class="step active">
+                <div class="step-icon">
+                    <i class="bi bi-cart-check"></i>
+                </div>
+                <div class="step-label">Cart Review</div>
+            </div>
+            <div class="step active">
+                <div class="step-icon">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div class="step-label">Shipping</div>
+            </div>
+            <div class="step current">
+                <div class="step-icon">
+                    <i class="bi bi-credit-card"></i>
+                </div>
+                <div class="step-label">Payment</div>
+            </div>
+            <div class="step">
+                <div class="step-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="step-label">Confirmation</div>
+            </div>
         </div>
     </div>
-</header>
-<br />
-<div class="container">
-    <div class="row">
 
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header">
-                    Order Summary
-                </div>
-                <div class="card-body">
-                    {% for product in cart_products %}
-                    {{ product.name }}:
-                    {% if product.is_sale %}
-                    ${{ product.sale_price }}
-                    {% else %}
-                    ${{ product.price }}
-                    {% endif %}
-
-                    <br />
-                    <small>Quantity:
-                        {% for key, value in quantities.items %}
-                        {% if key == product.id|slugify %}
-                        {{ value }}
-                        {% endif %}
-                        {% endfor %}</small>
-                    <br /><br />
-
-                    {% endfor %}
-                    Total: ${{ totals }}
-                    <br /><br />
-                    <a href="{% url 'cart_summary' %}" class="btn btn-sm btn-outline-secondary">Update Items</a>
+    <div class="row g-5">
+        <!-- Payment Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4">Payment Method</h3>
+                    <div class="payment-methods mb-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="payment-option selected">
+                                    <input type="radio" class="btn-check" name="payment-method" id="paypal" checked>
+                                    <label class="btn btn-outline-primary w-100 position-relative" for="paypal">
+                                        <img src="{% static 'assets/paypal-logo.png' %}" alt="PayPal" height="24">
+                                        <span
+                                            class="badge bg-success position-absolute top-0 end-0 m-2">Recommended</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                {{ paypal_form.render }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <br /><br />
-            <div class="card">
-                <div class="card-header">
-                    Shipping Info
-                </div>
-                <div class="card-body">
 
-                    Name: {{ shipping_info.shipping_full_name }}<br />
-                    Email: {{ shipping_info.shipping_email }}<br />
-                    Address 1: {{ shipping_info.shipping_address1 }}<br />
-                    Address 2: {{ shipping_info.shipping_address2 }}<br />
-                    City: {{ shipping_info.shipping_city }}<br />
-                    State: {{ shipping_info.shipping_state }}<br />
-                    Zipcode: {{ shipping_info.shipping_zipcode }}<br />
-                    Country: {{ shipping_info.shipping_country }}<br />
-                    <br />
-                    <a href="{% url 'checkout' %}" class="btn btn-outline-secondary">Update Shipping</a>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="card-title mb-0">Billing Information</h3>
+                        <small class="text-muted">(Optional)</small>
+                    </div>
 
-                </div>
-            </div>
-            <br /><br />
+                    <!-- Use Shipping Address Checkbox -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="useShippingAddress" checked>
+                            <label class="form-check-label" for="useShippingAddress">
+                                Use shipping address as billing address
+                            </label>
+                        </div>
+                    </div>
 
-            <center>
-                {{ paypal_form.render }}
-            </center>
-
-            <br /><br />
-
-            <div class="card">
-                <div class="card-header">
-                    Billing Info
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{% url 'process_order' %}">
+                    <form method="POST" action="{% url 'process_order' %}" class="needs-validation billing-form"
+                        novalidate>
                         {% csrf_token %}
+                        <div class="row g-3" id="billingFields" style="display: none;">
+                            {{ billing_form.non_field_errors }}
+                            {% for field in billing_form %}
+                            <div
+                                class="col-12 {% if field.name == 'billing_full_name' %}col-md-12{% else %}col-md-6{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field.errors }}
+                                <input type="{{ field.field.widget.input_type }}"
+                                    class="form-control {% if field.errors %}is-invalid{% endif %}"
+                                    id="{{ field.id_for_label }}" name="{{ field.html_name }}"
+                                    value="{{ field.value|default:'' }}" placeholder="Enter {{ field.label|lower }}">
+                                {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                <div class="invalid-feedback">
+                                    {{ field.errors|join:", " }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
 
-                        {{ billing_form.as_p }}
+                        <hr class="my-4">
 
-
-                        <button type="submit" class="btn btn-secondary">
-                            Pay Now
-                        </button>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'checkout' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Shipping
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Complete Order<i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </div>
                     </form>
-                    <br /><br />
-
                 </div>
             </div>
-            <br />
+        </div>
 
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <!-- Shipping Info Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="card-title mb-0">Shipping Details</h4>
+                        <a href="{% url 'checkout' %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    </div>
+                    <div class="shipping-details">
+                        <p class="mb-1"><strong>{{ shipping_info.shipping_full_name }}</strong></p>
+                        <p class="mb-1">{{ shipping_info.shipping_email }}</p>
+                        <p class="mb-1">{{ shipping_info.shipping_address1 }}</p>
+                        {% if shipping_info.shipping_address2 %}
+                        <p class="mb-1">{{ shipping_info.shipping_address2 }}</p>
+                        {% endif %}
+                        <p class="mb-1">
+                            {{ shipping_info.shipping_city }}, {{ shipping_info.shipping_state }} {{
+                            shipping_info.shipping_zipcode }}
+                        </p>
+                        <p class="mb-0">{{ shipping_info.shipping_country }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary Card -->
+            <div class="card border-0 shadow-sm sticky-top" style="top: 2rem;">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-4">Order Summary</h4>
+
+                    <!-- Order Items -->
+                    <div class="order-items mb-4">
+                        {% for product in cart_products %}
+                        <div class="order-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded me-3"
+                                    style="width: 64px; height: 64px; object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ product.name }}</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted">
+                                            Qty: {% for key, value in quantities.items %}
+                                            {% if key == product.id|slugify %}
+                                            {{ value }}
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <div class="fw-bold">
+                                            {% if product.is_sale %}
+                                            ${{ product.sale_price }}
+                                            {% else %}
+                                            ${{ product.price }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Order Totals -->
+                    <div class="order-totals">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal</span>
+                            <span>${{ totals }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Shipping</span>
+                            <span class="text-success">Free</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-0">
+                            <span class="fw-bold">Total</span>
+                            <span class="fw-bold">${{ totals }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<style>
+    /* Checkout Progress Styles */
+    .checkout-progress {
+        padding: 2rem 0;
+    }
 
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin: 0 auto;
+        max-width: 800px;
+    }
 
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 24px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e9ecef;
+        z-index: 0;
+    }
 
+    .step {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        width: 80px;
+    }
 
+    .step-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-size: 1.25rem;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
 
+    .step.active .step-icon {
+        border-color: #28a745;
+        color: #28a745;
+    }
+
+    .step.current .step-icon {
+        background: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .step.active .step-label,
+    .step.current .step-label {
+        color: #212529;
+        font-weight: 500;
+    }
+
+    /* Form Styles */
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    /* PayPal Button Styles */
+    .payment-options {
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .progress-steps {
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .progress-steps::before {
+            display: none;
+        }
+
+        .step {
+            width: calc(50% - 1rem);
+        }
+
+        .sticky-top {
+            position: relative !important;
+            top: 0 !important;
+            margin-top: 2rem;
+        }
+    }
+
+    /* Enhanced Payment Method Styles */
+    .payment-methods .payment-option {
+        transition: all 0.3s ease;
+    }
+
+    .payment-methods .btn-outline-primary {
+        border-width: 2px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .payment-methods .btn-check:checked+.btn-outline-primary {
+        background-color: #f8f9fa;
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+
+    .payment-methods img {
+        max-height: 24px;
+        width: auto;
+    }
+
+    /* Form Transitions */
+    #billingFields {
+        transition: all 0.3s ease;
+    }
+
+    .billing-form {
+        position: relative;
+    }
+
+    .billing-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 1;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .billing-form.disabled::before {
+        opacity: 1;
+        visibility: visible;
+    }
+</style>
+
+<script>
+    // Form validation
+    (function () {
+        'use strict'
+
+        // Fetch all forms that need validation
+        var forms = document.querySelectorAll('.needs-validation')
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+
+    // Handle billing address toggle
+    document.getElementById('useShippingAddress').addEventListener('change', function () {
+        const billingFields = document.getElementById('billingFields');
+        const form = document.querySelector('.billing-form');
+
+        if (this.checked) {
+            billingFields.style.display = 'none';
+            form.classList.add('disabled');
+            // Clear and disable all billing fields
+            billingFields.querySelectorAll('input').forEach(input => {
+                input.value = '';
+                input.required = false;
+            });
+        } else {
+            billingFields.style.display = 'flex';
+            form.classList.remove('disabled');
+            // Enable required fields if needed
+            billingFields.querySelectorAll('input').forEach(input => {
+                input.required = false; // Keep all fields optional
+            });
+        }
+    });
+</script>
 {% endblock %}

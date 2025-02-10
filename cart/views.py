@@ -34,15 +34,21 @@ def cart_add(request):
         # Get Cart Quantity
         cart_quantity = cart.__len__()
 
-        # Get updated cart data
-        cart_products = cart.get_prods
-        quantities = cart.get_quants
+        # Get cart total
         cart_total = cart.cart_total()
 
         # Return response with cart data
         response = JsonResponse({
             'qty': cart_quantity,
             'cart_total': "{:.2f}".format(cart_total) if cart_total else "0.00",
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'price': str(product.price),
+                'sale_price': str(product.sale_price) if product.is_sale else None,
+                'is_sale': product.is_sale,
+                'image': product.image.url,
+            },
             'success': True
         })
         return response

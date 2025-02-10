@@ -12,7 +12,8 @@ from django.db.models import Q
 from cart.cart import Cart
 import json
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.http import Http404, JsonResponse
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
@@ -235,3 +236,37 @@ def register_user(request):
 
     else:
         return render(request, 'register.html', {'form': form})
+
+@login_required
+def toggle_wishlist(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        try:
+            product = Product.objects.get(id=product_id)
+            wishlist_item, created = Wishlist.objects.get_or_create(
+                user=request.user,
+                product=product
+            )
+            
+            if not created:
+                # If it already existed, remove it
+                wishlist_item.delete()
+                return JsonResponse({'added': False})
+            
+            return JsonResponse({'added': True})
+            
+        except Product.DoesNotExist:
+            return JsonResponse({'error': 'Product not found'}, status=404)
+        except Exception as e:
+            print(f"Error in toggle_wishlist: {str(e)}")
+            return JsonResponse({'error': 'Server error'}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def wishlist(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+    return render(request, 'wishlist.html', {
+        'wishlist_items': wishlist_items,
+        'categories': Category.objects.all()
+    })
