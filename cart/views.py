@@ -2,7 +2,6 @@ from django.shortcuts import render, get_object_or_404
 from .cart import Cart
 from store.models import Product
 from django.http import JsonResponse
-from django.contrib import messages
 
 # Create your views here.
 
@@ -22,7 +21,6 @@ def cart_add(request):
 
     # test for POST
     if request.POST.get('action') == 'post':
-
         # Get the products
         product_id = int(request.POST.get('product_id'))
         product_qty = int(request.POST.get('product_qty'))
@@ -36,11 +34,20 @@ def cart_add(request):
         # Get Cart Quantity
         cart_quantity = cart.__len__()
 
-        # Return response
-        # response = JsonResponse({'Product Name': product.name})
-        response = JsonResponse({'qty': cart_quantity})
-        messages.success(request, ('Product Added To Cart'))
+        # Get updated cart data
+        cart_products = cart.get_prods
+        quantities = cart.get_quants
+        cart_total = cart.cart_total()
+
+        # Return response with cart data
+        response = JsonResponse({
+            'qty': cart_quantity,
+            'cart_total': "{:.2f}".format(cart_total) if cart_total else "0.00",
+            'success': True
+        })
         return response
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
 def cart_delete(request):
@@ -52,24 +59,10 @@ def cart_delete(request):
         cart.delete(product=product_id)
 
         response = JsonResponse({'product': product_id})
-        messages.success(request, ('Item Deleted From Shopping Cart'))
         return response
 
 
 def cart_update(request):
-    # cart = Cart(request)
-    # if request.POST.get('action') == 'post':
-
-    #     # Get stuff from cart
-    #     product_id = int(request.POST.get('product_id'))
-    #     product_qty = int(request.POST.get('product_qty'))
-
-    #     cart.update(product=product_id, quantity=product_qty)
-
-    #     response = JsonResponse({'qty': product_qty})
-    #     messages.success(request, ('Your Cart Has Been Updated'))
-    #     return response
-
     cart = Cart(request)
     if request.POST.get('action') == 'post':
         # Get stuff
@@ -79,6 +72,4 @@ def cart_update(request):
         cart.update(product=product_id, quantity=product_qty)
 
         response = JsonResponse({'qty': product_qty})
-        # return redirect('cart_summary')
-        messages.success(request, ("Your Cart Has Been Updated..."))
         return response

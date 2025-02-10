@@ -131,12 +131,21 @@ def category(request, foo):
 # Products
 def product(request, pk):
     product = Product.objects.get(id=pk)
-    return render(request, 'product.html', {'product': product})
+    # Get related products from the same category, excluding the current product
+    related_products = Product.objects.filter(category=product.category).exclude(id=pk)[:4]
+    return render(request, 'product.html', {
+        'product': product,
+        'related_products': related_products
+    })
 
 
 def home(request):
     products = Product.objects.all()
-    return render(request, 'home.html', {'products': products})
+    categories = Category.objects.all()
+    return render(request, 'home.html', {
+        'products': products,
+        'categories': categories
+    })
 
 
 def about(request):

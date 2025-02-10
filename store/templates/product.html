@@ -1,93 +1,444 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
 {% block content %}
+<!-- Product Schema for SEO -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "{{ product.name }}",
+    "description": "{{ product.description }}",
+    "image": "{{ product.image.url }}",
+    "category": "{{ product.category.name }}",
+    "offers": {
+        "@type": "Offer",
+        "price": "{{ product.sale_price|default:product.price }}",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+    }
+}
+</script>
 
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'category' product.category.name %}">{{product.category.name}}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
 
-
-<div class="container">
-    <br><br>
-    <div class="card mb-3">
+    <div class="card border-0 shadow-sm">
         <div class="row g-0">
-            <div class="col-md-4">
-                <img src="{{product.image.url}}" class="img-fluid rounded-start" alt="...">
-            </div>
-            <div class="col-md-8">
-                <div class="card-body">
-                    <center>
-                        <h5 class="card-title">{{ product.name }} </h5>
-                        <p class="card-text">{{ product.description }}</p>
-
-
+            <!-- Product Images -->
+            <div class="col-md-6">
+                <div class="product-gallery">
+                    <div class="main-image position-relative">
                         {% if product.is_sale %}
-                        <div class="d-flex justify-content-center small text-warning mb-2">
-                            <div class="bi-star-fill"></div>
-                            &nbsp;&nbsp;Sale!&nbsp;&nbsp;
-                            <div class="bi-star-fill"></div>
+                        <div class="sale-badge">
+                            <span class="badge bg-danger">SALE</span>
                         </div>
-
-                        <!-- Product price-->
-                        <strike>
-                            ${{ product.price }}
-                        </strike>
-                        &nbsp;
-                        ${{ product.sale_price }}
-
-                        {% else %}
-                        ${{ product.price }}
-
                         {% endif %}
-                        <br><br>
-                        <div class="row justify-content-center">
-                            <div class="col-md-2">Quanity:</div>
-                            <div class="col-md-2">
-                                <select class="form-select form-select-sm" id="qty-cart">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
+                        <div class="zoom-container">
+                            <img src="{{ product.image.url }}" class="img-fluid rounded-start" alt="{{ product.name }}"
+                                id="zoom-image">
+                            <div class="zoom-lens"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="col-md-6">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="category-badge mb-2">{{ product.category.name }}</span>
+                            <div class="share-buttons">
+                                <button class="btn btn-sm btn-outline-secondary share-btn" data-share="facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary share-btn" data-share="twitter">
+                                    <i class="bi bi-twitter"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary share-btn" data-share="whatsapp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </button>
                             </div>
                         </div>
-                        <br><br>
-                        <a href="{% url 'home' %}" class="btn btn-secondary">Go Back</a>
-                        <button type="button" value="{{ product.id }}" id="add_cart" class="btn btn-secondary">Add To
-                            Cart</button>
-                    </center>
+
+                        <h1 class="h2 mb-2">{{ product.name }}</h1>
+
+                        <div class="price-container mb-3">
+                            {% if product.is_sale %}
+                            <span class="h3 text-danger mb-0">${{ product.sale_price }}</span>
+                            <span class="h5 text-muted text-decoration-line-through ms-2">${{ product.price }}</span>
+                            {% with savings=product.price|subtract:product.sale_price %}
+                            <span class="badge bg-danger ms-2">Save ${{ savings|floatformat:2 }}</span>
+                            {% endwith %}
+                            {% else %}
+                            <span class="h3 mb-0">${{ product.price }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="stock-status mb-3">
+                            {% if product.stock > 10 %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>In Stock
+                            </span>
+                            {% elif product.stock > 0 %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-exclamation-circle me-1"></i>Low Stock ({{ product.stock }} left)
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle me-1"></i>Out of Stock
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <p class="text-muted">{{ product.description }}</p>
+                    </div>
+
+                    <form class="mb-4" id="add-to-cart-form">
+                        {% csrf_token %}
+                        <div class="row align-items-center g-3">
+                            <div class="col-auto">
+                                <label for="quantity" class="form-label mb-0">Quantity</label>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select" id="qty-cart" style="width: 5rem;">
+                                    {% for i in "12345"|make_list %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" id="add_cart" class="btn btn-primary" value="{{product.id }}" {%if not product.stock %}disabled{% endif %}>
+                                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                                </button>
+                                <a href="{% url 'home' %}" class="btn btn-outline-secondary ms-2">
+                                    <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Product Features -->
+                    <div class="product-features">
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6">
+                                <div class="d-flex align-items-center feature-item">
+                                    <i class="bi bi-truck fs-4 me-2"></i>
+                                    <div>
+                                        <h6 class="mb-0">Free Shipping</h6>
+                                        <small class="text-muted">On orders over $50</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="d-flex align-items-center feature-item">
+                                    <i class="bi bi-shield-check fs-4 me-2"></i>
+                                    <div>
+                                        <h6 class="mb-0">Secure Payment</h6>
+                                        <small class="text-muted">100% secure payment</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="d-flex align-items-center feature-item">
+                                    <i class="bi bi-arrow-counterclockwise fs-4 me-2"></i>
+                                    <div>
+                                        <h6 class="mb-0">Easy Returns</h6>
+                                        <small class="text-muted">30 day return policy</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="d-flex align-items-center feature-item">
+                                    <i class="bi bi-headset fs-4 me-2"></i>
+                                    <div>
+                                        <h6 class="mb-0">24/7 Support</h6>
+                                        <small class="text-muted">Dedicated support</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <br><br><br><br>
 
+    <!-- Related Products -->
+    {% if related_products %}
+    <section class="related-products mt-5">
+        <h3 class="h4 mb-4">Related Products</h3>
+        <div class="row g-4">
+            {% for related in related_products %}
+            <div class="col-6 col-md-3">
+                {% include 'components/product_card.html' with product=related %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </div>
 
 <script>
-    // Check if button is pressed
-    $(document).on('click', '#add_cart', function (e) {
+    $(document).ready(function () {
+        // Add to recently viewed products
+        if (window.recentlyViewed) {
+            const productData = {
+                id: '{{ product.id }}',
+                name: '{{ product.name|escapejs }}',
+                price: '{{ product.price }}',
+                image: '{{ product.image.url }}',
+                is_sale: {% if product.is_sale %}true{% else %} false{% endif %},
+            {% if product.is_sale %} sale_price: '{{ product.sale_price }}'{% endif %}
+        };
+        window.recentlyViewed.addProduct(productData);
+    }
+
+    // Image zoom functionality
+    const $zoomContainer = $('.zoom-container');
+    const $zoomImage = $('#zoom-image');
+    const $zoomLens = $('.zoom-lens');
+
+    $zoomContainer.on('mousemove', function (e) {
+        const bounds = this.getBoundingClientRect();
+        const x = e.clientX - bounds.left;
+        const y = e.clientY - bounds.top;
+
+        const lensSize = 100;
+        const zoomFactor = 2;
+
+        $zoomLens.css({
+            left: x - lensSize / 2 + 'px',
+            top: y - lensSize / 2 + 'px',
+            backgroundImage: `url(${$zoomImage.attr('src')})`,
+            backgroundPosition: `-${(x * zoomFactor - lensSize / 2)}px -${(y * zoomFactor - lensSize / 2)}px`,
+            backgroundSize: `${$zoomContainer.width() * zoomFactor}px`
+        });
+    });
+
+    $zoomContainer.hover(
+        function () { $zoomLens.show(); },
+        function () { $zoomLens.hide(); }
+    );
+
+    // Share buttons functionality
+    $('.share-btn').click(function () {
+        const share = $(this).data('share');
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent('{{ product.name }}');
+
+        let shareUrl;
+        switch (share) {
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+                break;
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=${title}%20${url}`;
+                break;
+        }
+
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    });
+
+    // Add to cart functionality with loading state
+    $('#add_cart').click(function (e) {
         e.preventDefault();
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+
+        // Show loading state
+        $btn.prop('disabled', true)
+            .html('<span class="spinner-border spinner-border-sm me-2"></span>Adding...');
+
+        // Create toast with initial message
+        const toastId = createToast('Adding product to cart...');
+
         $.ajax({
             type: 'POST',
-            url: '{% url 'cart_add' %}',
+            url: "{% url 'cart_add' %}",
             data: {
-                product_id: $('#add_cart').val(),
+                product_id: $btn.val(),
                 product_qty: $('#qty-cart option:selected').text(),
                 csrfmiddlewaretoken: '{{ csrf_token }}',
                 action: 'post'
             },
-
             success: function (json) {
-                console.log(json)
-                document.getElementById('cart_quantity').textContent = json.qty
-                location.reload()
+                // Update cart quantity
+                const cartQuantity = document.getElementById('cart_quantity');
+                if (cartQuantity) {
+                    cartQuantity.textContent = json.qty;
+                    cartQuantity.style.display = json.qty > 0 ? 'block' : 'none';
+                }
 
+                // Update toast to success
+                updateToast(toastId, 'Product added to cart successfully', 'success');
 
+                // Animate cart icon
+                const $cartIcon = $('.navbar .bi-cart3').parent();
+                $cartIcon.addClass('cart-bump');
+                setTimeout(() => $cartIcon.removeClass('cart-bump'), 300);
             },
-            error: function (xhr, status, errmsg, err) {
-
+            error: function () {
+                // Update toast to error
+                updateToast(toastId, 'Error adding product to cart', 'error');
+            },
+            complete: function () {
+                // Reset button state
+                $btn.prop('disabled', false).html(originalHtml);
             }
+        });
+    });
 
-        })
-    })
+    // Quantity validation
+    $('#qty-cart').on('change', function () {
+        const stock = parseInt('{{ product.stock|default:0 }}');
+        const qty = parseInt($(this).val());
+
+        if (qty > stock) {
+            $(this).val(stock);
+            createToast('Selected quantity exceeds available stock', 'warning');
+        }
+    });
+    });
 </script>
 
+<style>
+    .product-gallery {
+        position: relative;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+
+    .main-image {
+        padding: 2rem;
+    }
+
+    .zoom-container {
+        position: relative;
+        cursor: zoom-in;
+    }
+
+    .zoom-lens {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: none;
+        background-repeat: no-repeat;
+        pointer-events: none;
+    }
+
+    .sale-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 2;
+    }
+
+    .share-buttons {
+        gap: 0.5rem;
+        display: flex;
+    }
+
+    .share-buttons .btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .share-buttons .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .product-features {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .feature-item {
+        transition: all 0.2s ease;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .feature-item:hover {
+        background: #f8f9fa;
+        transform: translateY(-2px);
+    }
+
+    .product-features i {
+        color: #2c3e50;
+    }
+
+    .cart-bump {
+        animation: cartBump 0.3s ease;
+    }
+
+    @keyframes cartBump {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.2);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 1.5rem !important;
+        }
+
+        .share-buttons {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0.5rem;
+            border-radius: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .share-buttons .btn {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    /* Related Products */
+    .related-products {
+        overflow: hidden;
+    }
+
+    .related-products .product-card {
+        height: 100%;
+    }
+</style>
 {% endblock %}
