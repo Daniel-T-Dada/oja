@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -11,6 +11,8 @@ from django import forms
 from django.db.models import Q
 from cart.cart import Cart
 import json
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 
 
 # Create your views here.
@@ -130,22 +132,36 @@ def category(request, foo):
 
 # Products
 def product(request, pk):
-    product = Product.objects.get(id=pk)
-    # Get related products from the same category, excluding the current product
-    related_products = Product.objects.filter(category=product.category).exclude(id=pk)[:4]
-    return render(request, 'product.html', {
-        'product': product,
-        'related_products': related_products
-    })
+    try:
+        product = get_object_or_404(Product, id=pk)
+        # Get related products from the same category, excluding the current product
+        related_products = Product.objects.filter(category=product.category).exclude(id=pk).order_by('?')[:4]
+        return render(request, 'product.html', {
+            'product': product,
+            'related_products': related_products,
+            'categories': Category.objects.all()
+        })
+    except Http404:
+        messages.error(request, "Product not found.")
+        return redirect('home')
+    except Exception as e:
+        print(f"Error in product view: {str(e)}")
+        return render(request, '500.html', status=500)
 
 
 def home(request):
-    products = Product.objects.all()
-    categories = Category.objects.all()
-    return render(request, 'home.html', {
-        'products': products,
-        'categories': categories
-    })
+    try:
+        products = Product.objects.all()
+        categories = Category.objects.all()
+        return render(request, 'home.html', {
+            'products': products,
+            'categories': categories
+        })
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in home view: {str(e)}")
+        # Return a friendly error page
+        return render(request, '500.html', status=500)
 
 
 def about(request):
@@ -154,34 +170,38 @@ def about(request):
 
 def login_user(request):
     if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
+        try:
+            username = request.POST['username']
+            password = request.POST['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                try:
+                    current_user = Profile.objects.get(user__id=request.user.id)
+                    # Get their saved cart from the database
+                    saved_cart = current_user.old_cart
+                    # Convert database string to python dictionary(original cart format)
+                    if saved_cart:
+                        # Convert to dictionary using JSON
+                        converted_cart = json.loads(saved_cart)
+                        # Add the loaded cart dictionary to our session
+                        cart = Cart(request)
+                        # Loop thru the cart and add the items from the database
+                        for key,value in converted_cart.items():
+                            cart.db_add(product=key, quantity=value)
+                except (Profile.DoesNotExist, json.JSONDecodeError) as e:
+                    print(f"Error loading saved cart: {str(e)}")
+                    # Continue without loading saved cart
+                    pass
 
-            # Do some shopping cart thingy...😁
-            current_user = Profile.objects.get(user__id=request.user.id)
-            # Get their saved cart from the database
-            saved_cart = current_user.old_cart
-            # Convert database string to python dictionary(original cart format)
-            if saved_cart:
-                # Conver to dictionary using JSON
-                converted_cart = json.loads(saved_cart)
-                # Add the loaded cart dictionary to our session
-                # Get the cart
-                cart = Cart(request)
-				# Loop thru the cart and add the items from the database
-                for key,value in converted_cart.items():
-                        cart.db_add(product=key, quantity=value)
-
-
-            
-
-            messages.success(request, ("Login successfully"))
-            return redirect('home')
-        else:
-            messages.success(request, ("Login failed, please try again"))
+                messages.success(request, "Login successful")
+                return redirect('home')
+            else:
+                messages.error(request, "Login failed, please try again")
+                return redirect('login')
+        except Exception as e:
+            print(f"Error in login view: {str(e)}")
+            messages.error(request, "An error occurred during login")
             return redirect('login')
     else:
         return render(request, 'login.html', {})

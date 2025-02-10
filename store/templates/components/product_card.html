@@ -690,5 +690,62 @@
             const compareModal = new bootstrap.Modal('#compareModal');
             compareModal.show();
         });
+
+        // Add to cart functionality
+        $('.add-to-cart').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const $btn = $(this);
+            const productId = $btn.data('product-id');
+            const originalHtml = $btn.html();
+
+            // Show loading state
+            $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
+
+            // Create toast with initial message
+            const toastId = createToast('Adding product to cart...');
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'cart_add' %}",
+                data: {
+                    product_id: productId,
+                    product_qty: 1,
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    action: 'post'
+                },
+                success: function (json) {
+                    // Update cart quantity
+                    const cartQuantity = document.getElementById('cart_quantity');
+                    if (cartQuantity) {
+                        cartQuantity.textContent = json.qty;
+                        cartQuantity.style.display = json.qty > 0 ? 'block' : 'none';
+                    }
+
+                    // Update toast to success
+                    updateToast(toastId, 'Product added to cart successfully', 'success');
+
+                    // Show success checkmark
+                    $btn.html('<i class="bi bi-check-lg"></i>');
+                    setTimeout(() => {
+                        $btn.html(originalHtml);
+                    }, 2000);
+
+                    // Animate cart icon
+                    const $cartIcon = $('.navbar .bi-cart3').parent();
+                    $cartIcon.addClass('cart-bump');
+                    setTimeout(() => $cartIcon.removeClass('cart-bump'), 300);
+                },
+                error: function () {
+                    // Update toast to error
+                    updateToast(toastId, 'Error adding product to cart', 'error');
+                    $btn.html(originalHtml);
+                },
+                complete: function () {
+                    // Reset button state
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
     });
 </script>
