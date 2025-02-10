@@ -21,7 +21,7 @@
 }
 </script>
 
-<div class="container py-5">
+<div class="container py-5 mt-5">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -201,7 +201,7 @@
                 price: '{{ product.price }}',
                 image: '{{ product.image.url }}',
                 is_sale: {% if product.is_sale %}true{% else %} false{% endif %},
-            {% if product.is_sale %} sale_price: '{{ product.sale_price }}'{% endif %}
+            sale_price: {% if product.is_sale %} '{{ product.sale_price }}'{% else %} null{% endif %}
         };
         window.recentlyViewed.addProduct(productData);
     }

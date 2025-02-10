@@ -85,3 +85,16 @@ class Order(models.Model):
 
     def __str__(self):
         return self.product
+
+# Wishlist Model
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')  # Prevent duplicate wishlist items
+        ordering = ['-added_date']
+
+    def __str__(self):
+        return f"{self.user.username}'s wishlist item: {self.product.name}"

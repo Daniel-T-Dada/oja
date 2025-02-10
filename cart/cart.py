@@ -114,7 +114,7 @@ class Cart():
         return products
 
     def get_quants(self):
-        quantities = self.cart
+        quantities = {str(k): v for k, v in self.cart.items()}
         return quantities
 
     def update(self, product, quantity):
