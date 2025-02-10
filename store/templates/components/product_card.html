@@ -1,0 +1,694 @@
+{% load static %}
+
+<div class="product-card" data-product-id="{{ product.id }}">
+    <div class="card h-100">
+        <!-- Product Image Container -->
+        <div class="product-img-container">
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" loading="lazy">
+            {% if product.is_sale %}
+            <div class="sale-badge">
+                <span class="badge bg-danger">SALE</span>
+            </div>
+            {% endif %}
+            <div class="product-actions">
+                <button class="btn btn-light btn-sm quick-view-btn" data-bs-toggle="modal"
+                    data-bs-target="#quickViewModal{{ product.id }}" title="Quick View">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-light btn-sm add-to-cart" data-product-id="{{ product.id }}" title="Add to Cart">
+                    <i class="bi bi-cart-plus"></i>
+                </button>
+                <button class="btn btn-light btn-sm compare-btn" data-product-id="{{ product.id }}"
+                    data-name="{{ product.name }}"
+                    data-price="{% if product.is_sale %}{{ product.sale_price }}{% else %}{{ product.price }}{% endif %}"
+                    data-category="{{ product.category.name }}" data-description="{{ product.description }}"
+                    data-image="{{ product.image.url }}" data-stock="{{ product.stock }}"
+                    data-is-sale="{{ product.is_sale|lower }}" {% if product.is_sale %}data-regular-price="{{ product.price }}" {% endif %} title="Compare">
+                    <i class="bi bi-arrow-left-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title mb-0">
+                    <a href="{% url 'product' product.id %}" class="text-dark text-decoration-none product-name">
+                        {{ product.name }}
+                    </a>
+                </h5>
+                <span class="category-badge">{{ product.category.name }}</span>
+            </div>
+
+            <p class="card-text small text-muted mb-2">
+                {{ product.description|truncatechars:100 }}
+            </p>
+
+            <div class="mt-auto d-flex justify-content-between align-items-center">
+                <div class="price-container">
+                    {% if product.is_sale %}
+                    <span class="text-danger fw-bold">${{ product.sale_price }}</span>
+                    <small class="text-muted text-decoration-line-through ms-2">${{ product.price }}</small>
+                    {% else %}
+                    <span class="fw-bold">${{ product.price }}</span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'product' product.id %}" class="btn btn-outline-dark btn-sm">View Details</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick View Modal -->
+    <div class="modal fade" id="quickViewModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-body p-0">
+                    <button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <div class="quick-view-image">
+                                <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+                                {% if product.is_sale %}
+                                <div class="sale-badge">
+                                    <span class="badge bg-danger">SALE</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="quick-view-content p-4">
+                                <span class="category-badge mb-2">{{ product.category.name }}</span>
+                                <h5 class="mb-2">{{ product.name }}</h5>
+                                <div class="price-container mb-3">
+                                    {% if product.is_sale %}
+                                    <span class="h4 text-danger mb-0">${{ product.sale_price }}</span>
+                                    <span class="h6 text-muted text-decoration-line-through ms-2">${{ product.price
+                                        }}</span>
+                                    {% else %}
+                                    <span class="h4 mb-0">${{ product.price }}</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-muted mb-4">{{ product.description }}</p>
+                                <div class="d-flex gap-2 mb-4">
+                                    <select class="form-select w-auto" id="quickViewQty{{ product.id }}">
+                                        {% for i in "12345"|make_list %}
+                                        <option value="{{ i }}">{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-primary flex-grow-1 quick-view-add-to-cart"
+                                        data-product-id="{{ product.id }}">
+                                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                                    </button>
+                                </div>
+                                <div class="quick-view-footer">
+                                    <a href="{% url 'product' product.id %}" class="btn btn-outline-dark w-100">
+                                        View Full Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Product Card Styles */
+    .product-card {
+        margin-bottom: 1.5rem;
+    }
+
+    .product-card .card {
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        height: 100%;
+    }
+
+    .product-card .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .product-img-container {
+        position: relative;
+        padding-top: 100%;
+        overflow: hidden;
+        background: #f8f9fa;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .product-img-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .sale-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 2;
+    }
+
+    .sale-badge .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    .product-actions {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+
+    .product-card:hover .product-actions {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .product-actions .btn {
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: white;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        color: #2c3e50;
+    }
+
+    .product-actions .btn:hover {
+        background: #2c3e50;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .card-body {
+        padding: 1.25rem;
+        background: white;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .product-name {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.4;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .category-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        background: #f8f9fa;
+        color: #6c757d;
+        border-radius: 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .category-badge:hover {
+        background: #e9ecef;
+        color: #2c3e50;
+    }
+
+    .card-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .price-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .price-container .fw-bold {
+        font-size: 1.125rem;
+        color: #2c3e50;
+    }
+
+    .price-container .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .price-container .text-decoration-line-through {
+        font-size: 0.875rem;
+        color: #adb5bd;
+    }
+
+    .btn-outline-dark {
+        border-color: #dee2e6;
+        color: #2c3e50;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .btn-outline-dark:hover {
+        background: #2c3e50;
+        border-color: #2c3e50;
+        color: white;
+    }
+
+    /* Quick View Modal Styles */
+    .modal-content {
+        border: none;
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .quick-view-image {
+        position: relative;
+        height: 100%;
+        min-height: 400px;
+        background: #f8f9fa;
+    }
+
+    .quick-view-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .quick-view-content {
+        padding: 2rem !important;
+    }
+
+    .quick-view-content h5 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .quick-view-content .price-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .quick-view-content .text-muted {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+    }
+
+    .quick-view-content .form-select {
+        border-color: #dee2e6;
+        max-width: 100px;
+    }
+
+    .quick-view-content .btn-primary {
+        background: #2c3e50;
+        border-color: #2c3e50;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+    }
+
+    .quick-view-content .btn-primary:hover {
+        background: #1a252f;
+        border-color: #1a252f;
+    }
+
+    .quick-view-footer {
+        margin-top: 1.5rem;
+    }
+
+    .quick-view-footer .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+
+    /* List View Styles */
+    .list-view .product-card .card {
+        flex-direction: row;
+        height: 200px;
+    }
+
+    .list-view .product-img-container {
+        width: 200px;
+        padding-top: 0;
+        border-radius: 0.5rem 0 0 0.5rem;
+    }
+
+    .list-view .card-body {
+        flex: 1;
+        padding: 1.5rem;
+        border-radius: 0 0.5rem 0.5rem 0;
+    }
+
+    .list-view .product-name {
+        font-size: 1.125rem;
+        -webkit-line-clamp: 1;
+    }
+
+    .list-view .card-text {
+        -webkit-line-clamp: 3;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .list-view .product-card .card {
+            flex-direction: column;
+            height: auto;
+        }
+
+        .list-view .product-img-container {
+            width: 100%;
+            padding-top: 75%;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+
+        .list-view .card-body {
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+    }
+
+    /* Compare Bar Styles */
+    .compare-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        z-index: 1030;
+    }
+
+    .compare-bar.show {
+        transform: translateY(0);
+    }
+
+    .compare-bar-items {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0.5rem;
+    }
+
+    .compare-bar-item {
+        position: relative;
+        flex: 0 0 80px;
+    }
+
+    .compare-bar-item img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .remove-compare {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 20px;
+        height: 20px;
+        background: #dc3545;
+        color: white;
+        border: 2px solid white;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+
+    .remove-compare:hover {
+        transform: scale(1.1);
+        background: #bb2d3b;
+    }
+
+    /* Compare Modal Styles */
+    .compare-modal .modal-dialog {
+        max-width: 1200px;
+    }
+
+    .compare-modal .modal-content {
+        border: none;
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .compare-modal .table {
+        margin: 0;
+    }
+
+    .compare-modal th {
+        background: #f8f9fa;
+        font-weight: 600;
+        min-width: 150px;
+    }
+
+    .compare-modal td {
+        min-width: 200px;
+        vertical-align: middle;
+    }
+
+    /* Compare Badge */
+    .product-card.in-compare::before {
+        content: 'Added to Compare';
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(44, 62, 80, 0.9);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        z-index: 3;
+    }
+
+    .product-card.in-compare .compare-btn {
+        background: #2c3e50;
+        color: white;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        // Remove previous event handlers
+        $('.compare-btn').off('click');
+        $('.compare-bar').remove();
+        $('#compareModal').remove();
+
+        // Create compare bar if it doesn't exist
+        if (!$('.compare-bar').length) {
+            $('body').append(`
+                <div class="compare-bar">
+                    <div class="container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Compare Products (<span class="compare-count">0</span>)</h6>
+                            <div>
+                                <button class="btn btn-primary btn-sm compare-now" disabled>
+                                    Compare Now
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm ms-2 clear-compare">
+                                    Clear All
+                                </button>
+                            </div>
+                        </div>
+                        <div class="compare-bar-items"></div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // Create compare modal if it doesn't exist
+        if (!$('#compareModal').length) {
+            $('body').append(`
+                <div class="modal fade compare-modal" id="compareModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Compare Products</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table compare-table mb-0">
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // Initialize compare functionality
+        const compareProducts = new Set();
+        const maxCompare = 4;
+
+        // Compare button click handler
+        $('.compare-btn').on('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const $btn = $(this);
+            const productId = $btn.data('product-id');
+            const $card = $btn.closest('.product-card');
+
+            if ($card.hasClass('in-compare')) {
+                removeFromCompare(productId);
+            } else if (compareProducts.size < maxCompare) {
+                addToCompare($btn.data());
+            } else {
+                createToast('You can compare up to 4 products at a time', 'warning');
+            }
+        });
+
+        function addToCompare(productData) {
+            compareProducts.add(productData);
+            updateCompareBar();
+
+            // Add badge to product card
+            $(`.product-card[data-product-id="${productData.productId}"]`).addClass('in-compare');
+
+            // Show compare bar
+            $('.compare-bar').addClass('show');
+
+            // Enable compare button if more than 1 product
+            if (compareProducts.size > 1) {
+                $('.compare-now').prop('disabled', false);
+            }
+        }
+
+        function removeFromCompare(productId) {
+            compareProducts.forEach(product => {
+                if (product.productId === productId) {
+                    compareProducts.delete(product);
+                }
+            });
+
+            updateCompareBar();
+
+            // Remove badge from product card
+            $(`.product-card[data-product-id="${productId}"]`).removeClass('in-compare');
+
+            // Disable compare button if less than 2 products
+            if (compareProducts.size < 2) {
+                $('.compare-now').prop('disabled', true);
+            }
+
+            // Hide compare bar if empty
+            if (compareProducts.size === 0) {
+                $('.compare-bar').removeClass('show');
+            }
+        }
+
+        function updateCompareBar() {
+            const $items = $('.compare-bar-items');
+            const $count = $('.compare-count');
+
+            $items.empty();
+            $count.text(compareProducts.size);
+
+            compareProducts.forEach(product => {
+                $items.append(`
+                    <div class="compare-bar-item">
+                        <img src="${product.image}" alt="${product.name}">
+                        <button class="remove-compare" data-product-id="${product.productId}">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                `);
+            });
+        }
+
+        // Remove compare item click handler
+        $(document).on('click', '.remove-compare', function () {
+            removeFromCompare($(this).data('product-id'));
+        });
+
+        // Clear all handler
+        $('.clear-compare').click(function () {
+            compareProducts.clear();
+            $('.product-card').removeClass('in-compare');
+            $('.compare-bar').removeClass('show');
+            $('.compare-now').prop('disabled', true);
+            updateCompareBar();
+        });
+
+        // Compare now button handler
+        $('.compare-now').click(function () {
+            if (compareProducts.size < 2) return;
+
+            const $table = $('.compare-table tbody');
+            $table.empty();
+
+            // Add product images and names
+            let row = '<tr><th></th>';
+            compareProducts.forEach(product => {
+                row += `<td class="text-center">
+                    <img src="${product.image}" alt="${product.name}" class="img-fluid mb-3" style="max-width: 150px;">
+                    <h6 class="mb-2">${product.name}</h6>
+                    <div class="price-container mb-3">
+                        ${product.isSale === 'true'
+                        ? `<span class="text-danger fw-bold">$${product.price}</span>
+                               <span class="text-muted text-decoration-line-through ms-2">$${product.regularPrice}</span>`
+                        : `<span class="fw-bold">$${product.price}</span>`}
+                    </div>
+                    <a href="/product/${product.productId}" class="btn btn-sm btn-primary">View Details</a>
+                </td>`;
+            });
+            $table.append(row);
+
+            // Add other details
+            const details = [
+                { label: 'Category', key: 'category' },
+                { label: 'Description', key: 'description' },
+                { label: 'Stock', key: 'stock' }
+            ];
+
+            details.forEach(detail => {
+                row = `<tr><th>${detail.label}</th>`;
+                compareProducts.forEach(product => {
+                    row += `<td>${product[detail.key]}</td>`;
+                });
+                $table.append(row);
+            });
+
+            // Show modal
+            const compareModal = new bootstrap.Modal('#compareModal');
+            compareModal.show();
+        });
+    });
+</script>
