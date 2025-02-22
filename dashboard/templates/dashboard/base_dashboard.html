@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <nav class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <h3 class="mb-0">
+                {% if user.is_superuser %}
+                Management Dashboard
+                {% else %}
+                My Account
+                {% endif %}
+            </h3>
+            <button class="btn-close d-lg-none" id="closeSidebar"></button>
+        </div>
+
+        <div class="sidebar-content">
+            {% if user.is_superuser %}
+            <!-- Admin Menu -->
+            <div class="nav flex-column">
+                <a href="{% url 'dashboard:admin_dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard Overview
+                </a>
+                <a href="{% url 'dashboard:product_management' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'product_management' %}active{% endif %}">
+                    <i class="bi bi-box-seam me-2"></i>Product Management
+                </a>
+                <a href="{% url 'dashboard:order_management' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'order_management' %}active{% endif %}">
+                    <i class="bi bi-cart3 me-2"></i>Order Management
+                </a>
+                <a href="{% url 'dashboard:customer_management' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'customer_management' %}active{% endif %}">
+                    <i class="bi bi-people me-2"></i>Customer Management
+                </a>
+                <div class="nav-divider"></div>
+                <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+                    <i class="bi bi-gear me-2"></i>Django Admin
+                </a>
+            </div>
+            {% else %}
+            <!-- User Menu -->
+            <div class="nav flex-column">
+                <a href="{% url 'dashboard:user_dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                </a>
+                <a href="{% url 'dashboard:order_history' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'order_history' %}active{% endif %}">
+                    <i class="bi bi-clock-history me-2"></i>Order History
+                </a>
+                <a href="{% url 'wishlist' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
+                    <i class="bi bi-heart me-2"></i>Wishlist
+                </a>
+                <a href="{% url 'dashboard:account_settings' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'account_settings' %}active{% endif %}">
+                    <i class="bi bi-gear me-2"></i>Settings
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Mobile Toggle -->
+        <button class="btn btn-primary d-lg-none mb-3" id="toggleSidebar">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- Page Content -->
+        <div class="dashboard-content">
+            {% block dashboard_content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<style>
+    .dashboard-container {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: 72px;
+    }
+
+    .dashboard-sidebar {
+        width: 280px;
+        background: #fff;
+        border-right: 1px solid #dee2e6;
+        position: fixed;
+        top: 72px;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sidebar-content {
+        padding: 1rem 0;
+    }
+
+    .nav-link {
+        padding: 0.75rem 1.5rem;
+        color: #6c757d;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        color: #0d6efd;
+        background: rgba(13, 110, 253, 0.1);
+    }
+
+    .nav-link.active {
+        color: #0d6efd;
+        background: rgba(13, 110, 253, 0.1);
+        font-weight: 500;
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: #dee2e6;
+        margin: 1rem 0;
+    }
+
+    .dashboard-main {
+        flex-grow: 1;
+        margin-left: 280px;
+        padding: 2rem;
+        background: #f8f9fa;
+    }
+
+    .dashboard-content {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Mobile Styles */
+    @media (max-width: 991.98px) {
+        .dashboard-sidebar {
+            transform: translateX(-100%);
+        }
+
+        .dashboard-sidebar.show {
+            transform: translateX(0);
+        }
+
+        .dashboard-main {
+            margin-left: 0;
+            padding: 1rem;
+        }
+    }
+</style>
+
+<script>
+    // Mobile sidebar toggle
+    document.getElementById('toggleSidebar').addEventListener('click', function () {
+        document.querySelector('.dashboard-sidebar').classList.add('show');
+    });
+
+    document.getElementById('closeSidebar').addEventListener('click', function () {
+        document.querySelector('.dashboard-sidebar').classList.remove('show');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function (event) {
+        const sidebar = document.querySelector('.dashboard-sidebar');
+        const toggleBtn = document.getElementById('toggleSidebar');
+
+        if (window.innerWidth < 992 &&
+            !sidebar.contains(event.target) &&
+            !toggleBtn.contains(event.target) &&
+            sidebar.classList.contains('show')) {
+            sidebar.classList.remove('show');
+        }
+    });
+</script>
+{% endblock %}
