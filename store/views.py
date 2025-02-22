@@ -226,16 +226,13 @@ def register_user(request):
             # log in user
             user = authenticate(username=username, password=password)
             login(request, user)
-            messages.success(
-                request, ('You have been Registered successfully! Welcome!'))
+            messages.success(request, ('You have been Registered successfully! Welcome!'))
             return redirect('home')
         else:
-            messages.error(
-                request, ('Whoops! There was a problem registering! Please try again'))
-            return redirect('register')
+            # Return the form with errors instead of redirecting
+            return render(request, 'register.html', {'form': form})
 
-    else:
-        return render(request, 'register.html', {'form': form})
+    return render(request, 'register.html', {'form': form})
 
 @login_required
 def toggle_wishlist(request):

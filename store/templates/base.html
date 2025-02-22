@@ -477,14 +477,12 @@
                             <img src="${product.image}" alt="${product.name}">
                         </a>
                         <div class="recently-viewed-info">
-                            <a href="/product/${product.id}" class="recently-viewed-name">${product.name}</a>
-                            <div class="recently-viewed-price">
-                                ${product.is_sale
-                            ? `<span class="text-danger">$${product.sale_price}</span>
-                                       <small class="text-decoration-line-through">$${product.price}</small>`
-                            : `<span>$${product.price}</span>`
-                        }
-                            </div>
+            <a href="/product/${product.id}" class="recently-viewed-name">${product.name}</a>
+                    <div class="recently-viewed-price">
+                        ${product.is_sale ?
+                            `<span class="text-danger">$${product.sale_price}</span><small class="text-decoration-line-through">$${product.price}</small>` :
+                            `<span>$${product.price}</span>`}
+                    </div>
                         </div>
                     </div>
                 `);
@@ -590,6 +588,7 @@
             text-decoration: none;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             margin-bottom: 0.25rem;

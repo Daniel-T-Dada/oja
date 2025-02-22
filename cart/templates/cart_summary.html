@@ -194,7 +194,7 @@
             // Update cart via AJAX
             $.ajax({
                 type: 'POST',
-                url: '{% url 'cart_update' %}',
+                url: "{% url 'cart_update' %}",
                 data: {
                     product_id: productId,
                     product_qty: currentQty,
@@ -225,7 +225,7 @@
 
             $.ajax({
                 type: 'POST',
-                url: '{% url 'cart_delete' %}',
+                url: "{% url 'cart_delete' %}",
                 data: {
                     product_id: $btn.data('index'),
                     csrfmiddlewaretoken: '{{ csrf_token }}',

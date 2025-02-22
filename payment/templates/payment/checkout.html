@@ -51,7 +51,8 @@
                                 <input type="{{ field.field.widget.input_type }}"
                                     class="form-control {% if field.errors %}is-invalid{% endif %}"
                                     id="{{ field.id_for_label }}" name="{{ field.html_name }}"
-                                    value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %} placeholder="Enter {{ field.label|lower }}">
+                                    value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif
+                                    %} placeholder="Enter {{ field.label|lower }}">
                                 {% if field.help_text %}
                                 <div class="form-text">{{ field.help_text }}</div>
                                 {% endif %}
