@@ -119,8 +119,7 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <button type="button" id="add_cart" class="btn btn-primary" value="{{product.id }}" {%if
-                                    not product.stock %}disabled{% endif %}>
+                                <button type="button" id="add_cart" class="btn btn-primary" value="{{product.id }}" {%if not product.stock %}disabled{% endif %}>
                                     <i class="bi bi-cart-plus me-2"></i>Add to Cart
                                 </button>
                                 <a href="{% url 'home' %}" class="btn btn-outline-secondary ms-2">

@@ -1,0 +1,206 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="row g-4">
+    <!-- Welcome Message -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="welcome-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h4 class="mb-1">Welcome back, {{ user.first_name|default:user.username }}!</h4>
+                        <p class="text-muted mb-0">Here's what's happening with your account.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="mb-1">Total Orders</h6>
+                        <h3 class="mb-0">{{ recent_orders.count }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="mb-1">Wishlist Items</h6>
+                        <h3 class="mb-0">{{ user.wishlist_set.count }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="mb-1">Recent Activities</h6>
+                        <h3 class="mb-0">{{ user_activities.count }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title mb-0">Recent Orders</h5>
+                    <a href="{% url 'dashboard:order_history' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                {% if recent_orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>#{{ order.transaction_id }}</td>
+                                <td>{{ order.date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if order.status %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ order.product.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="empty-state">
+                        <i class="bi bi-bag text-muted"></i>
+                        <p class="mb-0">You haven't placed any orders yet</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Recent Activities</h5>
+                <div class="activities">
+                    {% if user_activities %}
+                    {% for activity in user_activities %}
+                    <div class="activity-item">
+                        <div class="activity-content">
+                            <small class="text-muted">{{ activity.timestamp|date:"M d, Y H:i" }}</small>
+                            <p class="mb-0">{{ activity.description }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="empty-state">
+                            <i class="bi bi-clock-history text-muted"></i>
+                            <p class="mb-0">No recent activities</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .welcome-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .activities {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        padding: 1rem;
+        border-left: 2px solid #dee2e6;
+        position: relative;
+        margin-left: 1rem;
+    }
+
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #dee2e6;
+        left: -7px;
+        top: 1.25rem;
+    }
+
+    .activity-item:not(:last-child) {
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state {
+        padding: 2rem;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+</style>
+{% endblock %}
